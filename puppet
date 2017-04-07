@@ -1,0 +1,45 @@
+node default {
+
+
+   package { 'java-1.8.0-openjdk-devel':
+   ensure => present,
+  }
+    archive { 'apache-tomcat-7.0.76':
+    ensure => present,
+    url => 'http://www-us.apache.org/dist/tomcat/tomcat-7/v7.0.76/bin/apache-tomcat-7.0.76.tar.gz',
+    target => '/opt',
+    }
+    exec{ 'Install tomcat-7':
+    command => "/bin/bash -c '/opt/apache-tomcat-7.0.76/bin/startup.sh'",
+}
+    exec { "mule_wget":
+    command => '/usr/bin/wget https://repository-master.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/3.8.1/mule-standalone-3.8.1.tar.gz',
+    path => '/opt',
+    timeout =>0,
+}
+    exec { 'extract tar':
+    path => '/usr/bin:/usr/sbin:/bin',
+    command => 'tar -zxvf /opt/mule-standalone-3.8.1.tar.gz',
+    logoutput => true,
+    exec { 'installing mule-standalone':
+    command => '/bin/sh /opt/mule-standalone-3.8.1/bin/mule',
+    timeout => 0,
+}
+   package { 'httpd':
+    ensure => present,
+}
+    service { 'httpd':
+    ensure => running,
+}
+      file { 'index.html':
+   path => '/var/www/html/index.html',
+    content => 'Service deployed by Puppet.from -HIMANSHU BARTWAL',
+    ensure => file,
+}
+  file { "/etc/httpd/conf.d/default.conf":
+   ensure => present,
+   content => template('/etc/httpd/conf.d/vhost.erb'),
+   notify => Service['httpd'],
+   require => Package['httpd'],
+}
+}
